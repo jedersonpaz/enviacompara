@@ -248,6 +248,14 @@ async function manejarAPI(req, res, urlObj) {
       return enviarJSON(res, 200, { rutas: rutasDeEmpresa(empresaId) });
     }
 
+    // GET /api/estadisticas — cifras reales de cobertura (nunca inventadas).
+    if (req.method === "GET" && partes.length === 2 && partes[1] === "estadisticas") {
+      const empresas = db.prepare("SELECT COUNT(DISTINCT id) AS n FROM empresas").get().n;
+      const corredores = db.prepare("SELECT COUNT(DISTINCT origen || '>' || destino) AS n FROM rutas").get().n;
+      const rutas = db.prepare("SELECT COUNT(*) AS n FROM rutas").get().n;
+      return enviarJSON(res, 200, { empresas, corredores, rutas });
+    }
+
     // GET /api/tasas — tasas de cambio reales, cacheadas (no se piden en cada visita)
     if (req.method === "GET" && partes.length === 2 && partes[1] === "tasas") {
       return enviarJSON(res, 200, cacheTasas);

@@ -6,8 +6,33 @@ const resultadosTitulo = document.getElementById("resultados-titulo");
 const ordenSelect = document.getElementById("orden-select");
 const monedaSelect = document.getElementById("moneda-select");
 const trayectoriaEl = document.getElementById("trayectoria");
+const btnIntercambiar = document.getElementById("btn-intercambiar");
+const statsCobertura = document.getElementById("stats-cobertura");
 
 let empresasActuales = [];
+
+// Cifras reales de cobertura (nunca inventadas) — se piden una vez al cargar.
+async function cargarEstadisticas() {
+  try {
+    const resp = await fetch("/api/estadisticas");
+    if (!resp.ok) return;
+    const stats = await resp.json();
+    if (!stats.empresas) return; // nada que mostrar todavía, no inventamos un cero bonito
+    statsCobertura.textContent = `🏢 ${stats.empresas} ${t("stats_empresas")} · 🌎 ${stats.corredores} ${t("stats_corredores")}`;
+    statsCobertura.hidden = false;
+  } catch (err) {
+    // si falla, simplemente no se muestra la barra de estadísticas
+  }
+}
+cargarEstadisticas();
+
+btnIntercambiar.addEventListener("click", function () {
+  const origenInput = document.getElementById("origen");
+  const destinoInput = document.getElementById("destino");
+  const temp = origenInput.value;
+  origenInput.value = destinoInput.value;
+  destinoInput.value = temp;
+});
 
 // Visual decorativo del corredor (bandera origen -- línea -- bandera destino).
 // No es tracking real de ningún envío, solo ilustra la ruta que se buscó.
@@ -71,7 +96,11 @@ function diasMin(rango) {
 
 function renderResultados(empresas) {
   const monedaVista = monedaSelect.value;
-  const precioMinUSD = Math.min(...empresas.map(e => convertirAUSD(e.precio, e.moneda)));
+  const preciosUSD = empresas.map(e => convertirAUSD(e.precio, e.moneda));
+  const precioMinUSD = Math.min(...preciosUSD);
+  const precioMaxUSD = Math.max(...preciosUSD);
+  const hayAhorro = empresas.length > 1 && precioMaxUSD > precioMinUSD;
+  const porcentajeAhorro = hayAhorro ? Math.round((1 - precioMinUSD / precioMaxUSD) * 100) : 0;
   const simboloVista = SIMBOLOS_MONEDA[monedaVista] || monedaVista + " ";
 
   listaResultados.innerHTML = empresas.map(e => {
@@ -79,6 +108,7 @@ function renderResultados(empresas) {
     const esMejor = precioUSD === precioMinUSD;
     const precioEnVista = convertirMoneda(e.precio, e.moneda, monedaVista);
     const esConvertido = e.moneda !== monedaVista;
+    const anchoBarra = precioMaxUSD > 0 ? Math.max(8, Math.round((precioUSD / precioMaxUSD) * 100)) : 100;
 
     return `
     <div class="oferta ${esMejor ? "mejor-precio" : ""}">
@@ -87,7 +117,7 @@ function renderResultados(empresas) {
         <div class="oferta-info">
           <div class="oferta-nombre">${e.nombre}</div>
           <div class="oferta-tipo">${e.tipo}</div>
-          ${esMejor ? `<span class="badge-mejor">${t("mejor_precio")}</span>` : ""}
+          ${esMejor ? `<span class="badge-mejor">${t("mejor_precio")}${hayAhorro ? ` · ${t("ahorras")} ${porcentajeAhorro}%` : ""}</span>` : ""}
         </div>
       </div>
       <div class="oferta-rating">
@@ -104,6 +134,7 @@ function renderResultados(empresas) {
         <div class="monto">${simboloVista}${precioEnVista.toFixed(precioEnVista >= 100 ? 0 : 2)}</div>
         <div class="moneda">${monedaVista}${esConvertido ? ` · ${t("precio_original")} ${SIMBOLOS_MONEDA[e.moneda] || e.moneda + " "}${e.precio} ${e.moneda}` : ""}</div>
         ${e.identificada ? `<div class="precio-estimado">${t("precio_no_confirmado")}</div>` : ""}
+        <div class="barra-precio-fondo"><div class="barra-precio ${esMejor ? "barra-mejor" : ""}" style="width:${anchoBarra}%"></div></div>
       </div>
       <div class="oferta-accion">
         ${botonAccion(e, ultimaBusqueda)}
@@ -214,6 +245,7 @@ document.addEventListener("idioma-cambiado", function () {
     renderTrayectoria(ultimaBusqueda.origen, ultimaBusqueda.destino, min, max);
     renderResultados(ordenar(empresasActuales, ordenSelect.value));
   }
+  cargarEstadisticas();
 });
 
 function capitaliza(texto) {

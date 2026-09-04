@@ -16,6 +16,7 @@
     </select>
     <div class="brand">Envia<span>Compara</span></div>
     <div class="tagline" data-i18n="tagline_buscador">Compara empresas de envío internacional en segundos</div>
+    <div id="stats-cobertura" class="stats-cobertura" hidden></div>
     <a class="link-empresas" href="empresas.html" data-i18n="link_empresas">¿Tienes una empresa de envíos? Regístrate gratis →</a>
   </div>
 </header>
@@ -28,6 +29,7 @@
         <label for="origen" data-i18n="label_origen">Origen</label>
         <input type="text" id="origen" list="lista-paises" placeholder="Ej. México" data-i18n-placeholder="placeholder_origen" required>
       </div>
+      <button type="button" id="btn-intercambiar" class="btn-intercambiar" title="Intercambiar origen y destino" aria-label="Intercambiar origen y destino">⇄</button>
       <div class="field">
         <label for="destino" data-i18n="label_destino">Destino</label>
         <input type="text" id="destino" list="lista-paises" placeholder="Ej. Colombia" data-i18n-placeholder="placeholder_destino" required>
