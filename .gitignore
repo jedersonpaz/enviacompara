@@ -1,0 +1,4 @@
+node_modules/
+enviacompara.db
+enviacompara.db-journal
+.env

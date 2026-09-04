@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EnviaCompara — Panel para empresas</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="empresas.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <select id="selector-idioma" class="selector-idioma">
+      <option value="es">🇪🇸 Español</option>
+      <option value="en">🇬🇧 English</option>
+    </select>
+    <div class="brand">Envia<span>Compara</span></div>
+    <div class="tagline" data-i18n="tagline_empresas">Panel para empresas de envío — carga tus rutas y precios</div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section id="pitch-empresa" class="pitch-empresa">
+    <h1 data-i18n="pitch_titulo">¿Cotizas por WhatsApp y se te pierden los clientes en el chat?</h1>
+    <p class="pitch-sub" data-i18n="pitch_subtitulo">Cuando alguien busca una empresa para enviar un paquete a otro país, hoy no te encuentra. No porque seas más cara — es que no apareces en ningún lado.</p>
+
+    <div class="pitch-columnas">
+      <div class="pitch-col">
+        <h3 data-i18n="pitch_dolor_titulo">¿Te suena familiar?</h3>
+        <ul class="pitch-lista dolor">
+          <li data-i18n="pitch_dolor_1">Cotizas uno por uno por WhatsApp y se te pierde el hilo</li>
+          <li data-i18n="pitch_dolor_2">No apareces cuando alguien busca envíos en tu ruta</li>
+          <li data-i18n="pitch_dolor_3">Competir contra las paqueterías grandes se siente imposible</li>
+        </ul>
+      </div>
+      <div class="pitch-col">
+        <h3 data-i18n="pitch_beneficio_titulo">Con EnviaCompara consigues</h3>
+        <ul class="pitch-lista beneficio">
+          <li data-i18n="pitch_beneficio_1">Aparecer cuando alguien busca justo tu ruta</li>
+          <li data-i18n="pitch_beneficio_2">Todas tus rutas y precios organizados en un panel, no en el chat</li>
+          <li data-i18n="pitch_beneficio_3">Cargar decenas de rutas de una vez con un Excel, no una por una</li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="pitch-honesto" data-i18n="pitch_honesto">Estamos empezando: hoy te registras gratis y ayudas a construir esto desde el inicio, en vez de llegar tarde cuando ya esté lleno de competencia.</p>
+  </section>
+
+  <section class="panel-empresa">
+
+    <div id="paso-registro">
+      <h2 data-i18n="registra_titulo">Registra tu empresa</h2>
+      <p class="ayuda" data-i18n="registra_ayuda">Gratis. Cargas las rutas que cubres y tus precios, y apareces en las búsquedas de los usuarios.</p>
+      <form id="form-empresa">
+        <div class="field">
+          <label for="nombre-empresa" data-i18n="label_nombre_empresa">Nombre de la empresa</label>
+          <input type="text" id="nombre-empresa" placeholder="Ej. MexPack Internacional" required>
+        </div>
+        <div class="field">
+          <label for="tipo-empresa" data-i18n="label_tipo_empresa">Tipo</label>
+          <select id="tipo-empresa">
+            <option value="Regional" data-i18n="opcion_regional">Regional / Consolidador</option>
+            <option value="Global" data-i18n="opcion_global">Transportista global</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="contacto-empresa" data-i18n="label_contacto">WhatsApp o correo de contacto</label>
+          <input type="text" id="contacto-empresa" placeholder="Ej. +52 55 1234 5678" required>
+        </div>
+        <button type="submit" class="btn-buscar" data-i18n="btn_entrar_panel">Entrar al panel</button>
+      </form>
+    </div>
+
+    <div id="paso-panel" hidden>
+      <div class="panel-header">
+        <div>
+          <h2 id="saludo-empresa"></h2>
+          <p class="ayuda" data-i18n="panel_ayuda">Agrega cada ruta que cubres con tu precio y tiempo de entrega.</p>
+        </div>
+        <button id="btn-salir" class="btn-secundario" data-i18n="btn_salir">Salir</button>
+      </div>
+
+      <form id="form-ruta" class="form-ruta">
+        <div class="field">
+          <label for="ruta-origen" data-i18n="label_origen">Origen</label>
+          <input type="text" id="ruta-origen" placeholder="Ej. México" required>
+        </div>
+        <div class="field">
+          <label for="ruta-destino" data-i18n="label_destino">Destino</label>
+          <input type="text" id="ruta-destino" placeholder="Ej. Colombia" required>
+        </div>
+        <div class="field field-small">
+          <label for="ruta-precio" data-i18n="label_precio">Precio</label>
+          <input type="number" id="ruta-precio" min="1" step="0.01" placeholder="45" required>
+        </div>
+        <div class="field field-small">
+          <label for="ruta-moneda" data-i18n="label_moneda">Moneda</label>
+          <select id="ruta-moneda">
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="MXN">MXN</option>
+            <option value="COP">COP</option>
+            <option value="PEN">PEN</option>
+            <option value="ARS">ARS</option>
+            <option value="CLP">CLP</option>
+            <option value="TRY">TRY</option>
+          </select>
+        </div>
+        <div class="field field-small">
+          <label for="ruta-dias" data-i18n="label_dias">Días entrega</label>
+          <input type="text" id="ruta-dias" placeholder="5-8" required>
+        </div>
+        <button type="submit" class="btn-buscar" data-i18n="btn_agregar_ruta">Agregar ruta</button>
+      </form>
+
+      <h3 class="tus-rutas-titulo" data-i18n="tus_rutas">Tus rutas activas</h3>
+      <div id="lista-rutas-empresa" class="lista-rutas-empresa"></div>
+      <p id="sin-rutas" class="ayuda" data-i18n="sin_rutas">Todavía no has agregado ninguna ruta.</p>
+
+      <div class="carga-masiva">
+        <h3 class="tus-rutas-titulo" data-i18n="carga_masiva_titulo">Carga masiva desde archivo</h3>
+        <p class="ayuda" data-i18n="carga_masiva_ayuda">¿Manejas muchas rutas? Sube un Excel o CSV en vez de cargarlas una por una.</p>
+        <div class="carga-masiva-acciones">
+          <button type="button" id="btn-plantilla" class="btn-secundario" data-i18n="btn_plantilla">Descargar plantilla de ejemplo</button>
+          <label for="input-archivo" class="btn-buscar btn-archivo" data-i18n="btn_archivo">Elegir archivo (.xlsx / .csv)</label>
+          <input type="file" id="input-archivo" accept=".csv,.xlsx,.xls" hidden>
+        </div>
+        <div id="resultado-carga" class="resultado-carga" hidden></div>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <span data-i18n="footer_empresas">EnviaCompara — panel para empresas</span> · <a href="index.html" data-i18n="link_buscador">Ir al buscador de usuarios</a>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="i18n.js"></script>
+<script src="data.js"></script>
+<script src="empresas.js"></script>
+</body>
+</html>

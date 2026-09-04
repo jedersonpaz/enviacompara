@@ -1,0 +1,277 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --azul: #1a56db;
+  --azul-oscuro: #1e3a8a;
+  --verde: #16a34a;
+  --gris-100: #f3f4f6;
+  --gris-300: #d1d5db;
+  --gris-500: #6b7280;
+  --gris-700: #374151;
+  --gris-900: #111827;
+  --blanco: #ffffff;
+  --radio: 10px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  color: var(--gris-900);
+  background: var(--gris-100);
+  line-height: 1.5;
+}
+
+.wrap { max-width: 860px; margin: 0 auto; padding: 0 20px; }
+
+.site-header {
+  background: linear-gradient(135deg, var(--azul-oscuro), var(--azul));
+  color: var(--blanco);
+  padding: 36px 0 44px;
+}
+
+.header-inner { text-align: center; position: relative; }
+
+.selector-idioma {
+  position: absolute;
+  top: -6px;
+  right: 20px;
+  background: rgba(255,255,255,0.15);
+  color: var(--blanco);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.selector-idioma option { color: var(--gris-900); }
+
+.brand { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+.brand span { color: #93c5fd; }
+
+.tagline { margin-top: 6px; font-size: 15px; color: #dbeafe; }
+
+.link-empresas {
+  display: inline-block;
+  margin-top: 14px;
+  font-size: 13.5px;
+  color: #bfdbfe;
+  text-decoration: underline;
+}
+.link-empresas:hover { color: var(--blanco); }
+
+.search-panel {
+  background: var(--blanco);
+  border-radius: var(--radio);
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.08);
+  padding: 22px;
+  margin-top: -28px;
+  position: relative;
+  z-index: 2;
+}
+
+#search-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 12px; font-weight: 600; color: var(--gris-500); text-transform: uppercase; letter-spacing: 0.03em; }
+.field-small { max-width: 130px; }
+
+input {
+  border: 1.5px solid var(--gris-300);
+  border-radius: 8px;
+  padding: 11px 12px;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+input:focus { border-color: var(--azul); }
+
+.btn-buscar {
+  background: var(--azul);
+  color: var(--blanco);
+  border: none;
+  border-radius: 8px;
+  padding: 12px 22px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.btn-buscar:hover { background: var(--azul-oscuro); }
+
+.demo-note {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #92400e;
+  background: #fef3c7;
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+.resultados-section { margin-top: 28px; }
+
+.resultados-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.resultados-header h2 { font-size: 19px; }
+
+.orden { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--gris-500); }
+.orden select {
+  border: 1.5px solid var(--gris-300);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+  background: var(--blanco);
+}
+
+.moneda-nota {
+  font-size: 12px;
+  color: var(--gris-500);
+  margin: -8px 0 16px;
+}
+
+.lista-resultados { display: flex; flex-direction: column; gap: 12px; }
+
+.oferta {
+  background: var(--blanco);
+  border-radius: var(--radio);
+  padding: 16px 18px;
+  display: grid;
+  grid-template-columns: 1fr auto auto auto auto;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(17, 24, 39, 0.06);
+  border: 1.5px solid transparent;
+}
+.oferta.mejor-precio { border-color: var(--verde); }
+
+.oferta-empresa { display: flex; align-items: flex-start; gap: 12px; }
+
+.oferta-avatar {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--blanco);
+  font-weight: 700;
+  font-size: 14px;
+}
+.oferta-info { display: flex; flex-direction: column; gap: 4px; }
+.oferta-nombre { font-weight: 700; font-size: 15.5px; }
+.oferta-tipo { font-size: 12px; color: var(--gris-500); }
+.badge-mejor {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--verde);
+  background: #dcfce7;
+  padding: 2px 8px;
+  border-radius: 999px;
+  width: fit-content;
+  margin-top: 2px;
+}
+
+.oferta-rating { text-align: center; font-size: 13px; color: var(--gris-700); }
+.oferta-rating .estrellas { color: #f59e0b; font-size: 14px; }
+.badge-nuevo { font-size: 12px; color: var(--azul); font-weight: 600; }
+
+.oferta-accion { display: flex; justify-content: flex-end; }
+
+.btn-contactar {
+  display: inline-block;
+  background: var(--verde);
+  color: var(--blanco);
+  text-decoration: none;
+  font-size: 13.5px;
+  font-weight: 700;
+  padding: 9px 16px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+.btn-contactar:hover { background: #15803d; }
+
+.badge-ejemplo {
+  font-size: 12px;
+  color: var(--gris-500);
+  background: var(--gris-100);
+  border: 1px dashed var(--gris-300);
+  padding: 7px 12px;
+  border-radius: 8px;
+  white-space: nowrap;
+  cursor: help;
+}
+
+.btn-invitar {
+  display: inline-block;
+  background: var(--blanco);
+  color: var(--azul);
+  border: 1.5px solid var(--azul);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 8px;
+  white-space: nowrap;
+  cursor: help;
+}
+.btn-invitar:hover { background: #eff6ff; }
+
+.btn-sitio-oficial {
+  display: inline-block;
+  background: var(--blanco);
+  color: var(--gris-700);
+  border: 1.5px solid var(--gris-300);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+.btn-sitio-oficial:hover { background: var(--gris-100); }
+
+.oferta-tiempo { text-align: center; font-size: 13px; color: var(--gris-700); }
+.oferta-tiempo .dias { font-weight: 600; color: var(--gris-900); }
+
+.oferta-precio { text-align: right; }
+.oferta-precio .monto { font-size: 20px; font-weight: 800; color: var(--gris-900); }
+.oferta-precio .moneda { font-size: 12px; color: var(--gris-500); }
+.precio-estimado { font-size: 11px; color: #b45309; margin-top: 2px; }
+
+.sin-resultados {
+  text-align: center;
+  background: var(--blanco);
+  border-radius: var(--radio);
+  padding: 40px 20px;
+  margin-top: 24px;
+  color: var(--gris-700);
+}
+.sin-resultados .sub { font-size: 13px; color: var(--gris-500); margin-top: 8px; }
+
+.site-footer {
+  margin-top: 48px;
+  padding: 20px 0 40px;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--gris-500);
+}
+
+@media (max-width: 640px) {
+  #search-form { grid-template-columns: 1fr; }
+  .field-small { max-width: none; }
+  .oferta { grid-template-columns: 1fr; text-align: left; gap: 8px; }
+  .oferta-rating, .oferta-tiempo, .oferta-precio { text-align: left; }
+}

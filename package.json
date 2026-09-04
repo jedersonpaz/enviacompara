@@ -1,0 +1,14 @@
+{
+  "name": "enviacompara",
+  "version": "1.0.0",
+  "description": "Comparador de precios de envio internacional",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EnviaCompara — Compara envíos internacionales</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <select id="selector-idioma" class="selector-idioma">
+      <option value="es">🇪🇸 Español</option>
+      <option value="en">🇬🇧 English</option>
+    </select>
+    <div class="brand">Envia<span>Compara</span></div>
+    <div class="tagline" data-i18n="tagline_buscador">Compara empresas de envío internacional en segundos</div>
+    <a class="link-empresas" href="empresas.html" data-i18n="link_empresas">¿Tienes una empresa de envíos? Regístrate gratis →</a>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="search-panel">
+    <form id="search-form">
+      <div class="field">
+        <label for="origen" data-i18n="label_origen">Origen</label>
+        <input type="text" id="origen" list="lista-paises" placeholder="Ej. México" data-i18n-placeholder="placeholder_origen" required>
+      </div>
+      <div class="field">
+        <label for="destino" data-i18n="label_destino">Destino</label>
+        <input type="text" id="destino" list="lista-paises" placeholder="Ej. Colombia" data-i18n-placeholder="placeholder_destino" required>
+      </div>
+      <div class="field field-small">
+        <label for="peso" data-i18n="label_peso">Peso aprox. (kg)</label>
+        <input type="number" id="peso" min="0.1" step="0.1" placeholder="2">
+      </div>
+      <button type="submit" class="btn-buscar" data-i18n="btn_buscar">Buscar empresas</button>
+    </form>
+    <datalist id="lista-paises"></datalist>
+    <p class="demo-note" data-i18n="demo_note">⚠️ Prototipo de validación — los precios y empresas mostrados son <strong>datos de ejemplo</strong>, no tarifas reales en vivo.</p>
+  </section>
+
+  <section id="resultados-section" class="resultados-section" hidden>
+    <div class="resultados-header">
+      <h2 id="resultados-titulo">Resultados</h2>
+      <div class="orden">
+        <label for="moneda-select" data-i18n="moneda_vista_label">Mostrar precios en</label>
+        <select id="moneda-select">
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+          <option value="MXN">MXN</option>
+          <option value="COP">COP</option>
+          <option value="PEN">PEN</option>
+          <option value="ARS">ARS</option>
+          <option value="CLP">CLP</option>
+          <option value="TRY">TRY</option>
+        </select>
+      </div>
+      <div class="orden">
+        <label for="orden-select" data-i18n="orden_label">Ordenar por</label>
+        <select id="orden-select">
+          <option value="precio" data-i18n="orden_precio">Precio: menor a mayor</option>
+          <option value="rating" data-i18n="orden_rating">Mejor calificación</option>
+          <option value="tiempo" data-i18n="orden_tiempo">Más rápido</option>
+        </select>
+      </div>
+    </div>
+    <p class="moneda-nota" data-i18n="moneda_vista_nota">Conversión aproximada de referencia — no son tasas de cambio en vivo.</p>
+    <div id="lista-resultados" class="lista-resultados"></div>
+  </section>
+
+  <section id="sin-resultados" class="sin-resultados" hidden>
+    <p data-i18n="sin_resultados_1">No encontramos empresas registradas para esa ruta todavía.</p>
+    <p class="sub" data-i18n="sin_resultados_2">Estamos agregando corredores cada semana — prueba con: México → Colombia, México → Perú, Turquía → México, o México → España.</p>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap" data-i18n="footer_buscador">EnviaCompara — prototipo de validación · datos de ejemplo</div>
+</footer>
+
+<script src="i18n.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
