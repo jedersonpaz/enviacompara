@@ -250,7 +250,7 @@ async function manejarAPI(req, res, urlObj) {
 
     // GET /api/estadisticas — cifras reales de cobertura (nunca inventadas).
     if (req.method === "GET" && partes.length === 2 && partes[1] === "estadisticas") {
-      const empresas = db.prepare("SELECT COUNT(DISTINCT id) AS n FROM empresas").get().n;
+      const empresas = db.prepare("SELECT COUNT(DISTINCT empresa_id) AS n FROM rutas").get().n;
       const corredores = db.prepare("SELECT COUNT(DISTINCT origen || '>' || destino) AS n FROM rutas").get().n;
       const rutas = db.prepare("SELECT COUNT(*) AS n FROM rutas").get().n;
       return enviarJSON(res, 200, { empresas, corredores, rutas });
