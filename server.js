@@ -70,6 +70,29 @@ db.exec(`
   );
 `);
 
+// ---------- Tasas de cambio reales (open.er-api.com, gratis, sin API key) ----------
+// Se refrescan cada 12h y quedan en memoria — si la API externa falla, seguimos
+// usando la última tasa real que sí funcionó (o la tabla de respaldo si el
+// servidor recién arrancó y todavía no logró la primera consulta).
+const TASAS_RESPALDO = { USD: 1, EUR: 0.86, MXN: 17, COP: 3900, PEN: 3.7, ARS: 1450, CLP: 970, TRY: 41 };
+let cacheTasas = { base: "USD", rates: TASAS_RESPALDO, actualizado: null, fuente: "respaldo (sin conexión aún)" };
+
+async function actualizarTasas() {
+  try {
+    const resp = await fetch("https://open.er-api.com/v6/latest/USD");
+    if (!resp.ok) throw new Error("respuesta no OK");
+    const data = await resp.json();
+    if (data.result !== "success" || !data.rates) throw new Error("formato inesperado");
+    cacheTasas = { base: "USD", rates: data.rates, actualizado: new Date().toISOString(), fuente: "open.er-api.com" };
+    console.log("Tasas de cambio actualizadas:", cacheTasas.actualizado);
+  } catch (err) {
+    console.warn("No se pudieron actualizar las tasas de cambio, se sigue usando la última conocida:", err.message);
+  }
+}
+
+actualizarTasas();
+setInterval(actualizarTasas, 12 * 60 * 60 * 1000); // cada 12 horas
+
 // ---------- Helpers ----------
 
 function normaliza(texto) {
@@ -223,6 +246,11 @@ async function manejarAPI(req, res, urlObj) {
       const rutaId = partes[4];
       db.prepare("DELETE FROM rutas WHERE id = ? AND empresa_id = ?").run(rutaId, empresaId);
       return enviarJSON(res, 200, { rutas: rutasDeEmpresa(empresaId) });
+    }
+
+    // GET /api/tasas — tasas de cambio reales, cacheadas (no se piden en cada visita)
+    if (req.method === "GET" && partes.length === 2 && partes[1] === "tasas") {
+      return enviarJSON(res, 200, cacheTasas);
     }
 
     // GET /api/buscar?origen=X&destino=Y

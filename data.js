@@ -47,28 +47,38 @@ const RUTAS = [
   }
 ];
 
-// Tasas de referencia aproximadas contra USD, SOLO para poder ordenar por precio
-// cuando hay rutas en distintas monedas. No son tasas en vivo — para producción
-// se necesita una API de tipo de cambio real (ej. exchangerate.host, Open Exchange Rates).
+// Tasas de cambio: unidades de esa moneda por 1 USD (mismo formato que la API).
+// Arranca con una tabla de respaldo (por si el fetch inicial tarda o falla) y se
+// reemplaza por tasas reales pidiéndolas a nuestro propio backend, que a su vez
+// las consulta a open.er-api.com y las cachea — ver /api/tasas en server.js.
 const TASAS_REFERENCIA_USD = {
-  USD: 1,
-  EUR: 1.08,
-  MXN: 0.054,
-  COP: 0.00025,
-  PEN: 0.27,
-  ARS: 0.001,
-  CLP: 0.0010,
-  TRY: 0.029
+  USD: 1, EUR: 0.86, MXN: 17, COP: 3900, PEN: 3.7, ARS: 1450, CLP: 970, TRY: 41
 };
+let tasasActualizadoEn = null;
+
+async function cargarTasasReales() {
+  try {
+    const resp = await fetch("/api/tasas");
+    if (!resp.ok) return;
+    const data = await resp.json();
+    if (data.rates) {
+      Object.assign(TASAS_REFERENCIA_USD, data.rates);
+      tasasActualizadoEn = data.actualizado;
+    }
+  } catch (err) {
+    console.warn("No se pudieron cargar tasas de cambio reales, usando tabla de respaldo:", err.message);
+  }
+}
+cargarTasasReales();
 
 function convertirAUSD(precio, moneda) {
   const tasa = TASAS_REFERENCIA_USD[moneda];
-  return tasa ? precio * tasa : precio;
+  return tasa ? precio / tasa : precio;
 }
 
 function convertirDesdeUSD(precioUSD, monedaDestino) {
   const tasa = TASAS_REFERENCIA_USD[monedaDestino];
-  return tasa ? precioUSD / tasa : precioUSD;
+  return tasa ? precioUSD * tasa : precioUSD;
 }
 
 // Convierte un precio de una moneda a otra, pasando por USD como puente.
