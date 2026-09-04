@@ -136,6 +136,32 @@ function resolverPais(texto) {
   return ALIAS[n] || n;
 }
 
+// Solo para el visual de trayectoria (código + nombre) — decorativo,
+// no representa geolocalización real ni tracking de ningún envío.
+// Usamos código de país en vez de emoji de bandera: en Windows/Chrome las
+// banderas emoji no se renderizan (salen como cajas "MX"), así que un badge
+// de texto con color es más confiable que depender de la fuente del sistema.
+const PAISES_INFO = {
+  mexico: { codigo: "MEX", nombre: "México", color: "#16a34a" },
+  colombia: { codigo: "COL", nombre: "Colombia", color: "#eab308" },
+  peru: { codigo: "PER", nombre: "Perú", color: "#dc2626" },
+  turquia: { codigo: "TUR", nombre: "Turquía", color: "#dc2626" },
+  espana: { codigo: "ESP", nombre: "España", color: "#eab308" },
+  argentina: { codigo: "ARG", nombre: "Argentina", color: "#60a5fa" },
+  chile: { codigo: "CHL", nombre: "Chile", color: "#dc2626" },
+  ecuador: { codigo: "ECU", nombre: "Ecuador", color: "#eab308" },
+  venezuela: { codigo: "VEN", nombre: "Venezuela", color: "#eab308" },
+  brasil: { codigo: "BRA", nombre: "Brasil", color: "#16a34a" }
+};
+
+function infoPais(codigo) {
+  return PAISES_INFO[codigo] || { codigo: codigo.slice(0, 3).toUpperCase(), nombre: capitalizaTexto(codigo), color: "#64748b" };
+}
+
+function capitalizaTexto(texto) {
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+
 // Busca una ruta: combina los datos de ejemplo (RUTAS) con las empresas reales
 // cargadas en el backend compartido (base de datos, visible para cualquier usuario).
 async function buscarRuta(origenTexto, destinoTexto) {

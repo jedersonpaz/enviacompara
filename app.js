@@ -5,8 +5,44 @@ const listaResultados = document.getElementById("lista-resultados");
 const resultadosTitulo = document.getElementById("resultados-titulo");
 const ordenSelect = document.getElementById("orden-select");
 const monedaSelect = document.getElementById("moneda-select");
+const trayectoriaEl = document.getElementById("trayectoria");
 
 let empresasActuales = [];
+
+// Visual decorativo del corredor (bandera origen -- línea -- bandera destino).
+// No es tracking real de ningún envío, solo ilustra la ruta que se buscó.
+function renderTrayectoria(origen, destino, diasMinGlobal, diasMaxGlobal) {
+  const o = infoPais(origen);
+  const d = infoPais(destino);
+  const rango = diasMinGlobal === diasMaxGlobal ? `${diasMinGlobal}` : `${diasMinGlobal}-${diasMaxGlobal}`;
+  trayectoriaEl.innerHTML = `
+    <div class="trayectoria-punto">
+      <div class="trayectoria-badge" style="background:${o.color}">${o.codigo}</div>
+      <div class="trayectoria-nombre">${o.nombre}</div>
+    </div>
+    <div class="trayectoria-linea">
+      <div class="trayectoria-riel"></div>
+      <div class="trayectoria-paquete">📦</div>
+      <div class="trayectoria-dias">${rango} ${t("dias_entrega")}</div>
+    </div>
+    <div class="trayectoria-punto">
+      <div class="trayectoria-badge" style="background:${d.color}">${d.codigo}</div>
+      <div class="trayectoria-nombre">${d.nombre}</div>
+    </div>
+  `;
+}
+
+function rangoDiasGlobal(empresas) {
+  let min = Infinity, max = -Infinity;
+  empresas.forEach(e => {
+    const partes = e.dias.split("-").map(n => parseInt(n, 10)).filter(n => !isNaN(n));
+    if (partes.length) {
+      min = Math.min(min, ...partes);
+      max = Math.max(max, ...partes);
+    }
+  });
+  return { min: isFinite(min) ? min : 0, max: isFinite(max) ? max : 0 };
+}
 
 function estrellas(rating) {
   const llenas = Math.round(rating);
@@ -145,6 +181,8 @@ form.addEventListener("submit", async function (e) {
   empresasActuales = ruta.empresas;
   ultimaBusqueda = { origen, destino };
   actualizarTituloResultados();
+  const { min, max } = rangoDiasGlobal(empresasActuales);
+  renderTrayectoria(ruta.origen, ruta.destino, min, max);
   sinResultados.hidden = true;
   resultadosSection.hidden = false;
   renderResultados(ordenar(empresasActuales, ordenSelect.value));
@@ -171,7 +209,9 @@ monedaSelect.addEventListener("change", function () {
 
 document.addEventListener("idioma-cambiado", function () {
   actualizarTituloResultados();
-  if (empresasActuales.length) {
+  if (empresasActuales.length && ultimaBusqueda) {
+    const { min, max } = rangoDiasGlobal(empresasActuales);
+    renderTrayectoria(ultimaBusqueda.origen, ultimaBusqueda.destino, min, max);
     renderResultados(ordenar(empresasActuales, ordenSelect.value));
   }
 });
