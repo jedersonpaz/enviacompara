@@ -198,7 +198,8 @@ async function buscarEmpresasRegistradas(origen, destino) {
       real: e.origen_dato === "registro_propio",
       identificada: e.origen_dato === "investigacion",
       contacto: e.contacto,
-      fuenteUrl: e.fuente_url
+      fuenteUrl: e.fuente_url,
+      investigadoEnVivo: data.investigadoEnVivo === true
     }));
   } catch (err) {
     // Si el backend no está disponible, el comparador sigue funcionando solo con datos de ejemplo.

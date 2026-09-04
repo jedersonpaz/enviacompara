@@ -49,6 +49,7 @@ db.exec(`
     veces INTEGER NOT NULL DEFAULT 1,
     primera_vez TEXT NOT NULL,
     ultima_vez TEXT NOT NULL,
+    ultima_investigacion_ia TEXT,
     PRIMARY KEY (origen, destino)
   );
 
@@ -69,6 +70,9 @@ db.exec(`
     creado_en TEXT NOT NULL
   );
 `);
+
+// Migración simple: agrega la columna si la base ya existía de antes sin ella.
+try { db.exec("ALTER TABLE busquedas_sin_resultado ADD COLUMN ultima_investigacion_ia TEXT"); } catch (e) { /* ya existía */ }
 
 // ---------- Tasas de cambio reales (open.er-api.com, gratis, sin API key) ----------
 // Se refrescan cada 12h y quedan en memoria — si la API externa falla, seguimos
@@ -92,6 +96,81 @@ async function actualizarTasas() {
 
 actualizarTasas();
 setInterval(actualizarTasas, 12 * 60 * 60 * 1000); // cada 12 horas
+
+// ---------- Investigación en vivo con IA (opcional, requiere ANTHROPIC_API_KEY) ----------
+// Cuando una búsqueda no encuentra nada, se busca en internet en vivo — pero SOLO
+// se publica lo que la propia IA confirmó en el sitio oficial de la empresa
+// (fuenteVerificada:true). Todo lo demás queda pendiente de revisión manual, nunca
+// se muestra como si fuera real sin esa confirmación. Sin la API key, esta función
+// no hace nada y el sitio sigue funcionando normal, solo sin este paso extra.
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || "";
+const THROTTLE_INVESTIGACION_MS = 60 * 60 * 1000; // no reintentar el mismo corredor antes de 1h
+
+async function investigarCorredorConIA(origen, destino) {
+  if (!ANTHROPIC_API_KEY) return [];
+
+  const prompt = `Busca en internet empresas REALES y actualmente operativas de paquetería/courier/forwarder que ofrezcan envíos internacionales en la ruta ${capitaliza(origen)} → ${capitaliza(destino)}.
+
+Para cada una, verifica su WhatsApp/teléfono o correo de contacto DIRECTAMENTE en su propio sitio web oficial — NO en directorios de terceros (ZoomInfo, Yelp, páginas amarillas, etc.). Da hasta 4 resultados, priorizando consolidadores/forwarders regionales sobre las grandes DHL/FedEx/UPS.
+
+Responde ÚNICAMENTE con un array JSON (sin texto antes ni después, sin bloque de código), con este formato exacto:
+[{"nombre":"...","tipo":"Regional","contacto":"...","fuenteUrl":"https://...","fuenteVerificada":true,"precio":<número estimado en USD>,"moneda":"USD","dias":"X-Y"}]
+
+"fuenteVerificada" debe ser true SOLO si de verdad confirmaste el contacto en el sitio propio de la empresa. Si no encuentras ninguna empresa con contacto confirmado así, responde con: []`;
+
+  const controlador = new AbortController();
+  const timeout = setTimeout(() => controlador.abort(), 45000);
+
+  try {
+    const resp = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-5",
+        max_tokens: 2048,
+        tools: [{ type: "web_search_20250305", name: "web_search" }],
+        messages: [{ role: "user", content: prompt }]
+      }),
+      signal: controlador.signal
+    });
+
+    if (!resp.ok) {
+      console.warn("Investigación IA: la API respondió", resp.status);
+      return [];
+    }
+
+    const data = await resp.json();
+    const texto = (data.content || [])
+      .filter(bloque => bloque.type === "text")
+      .map(bloque => bloque.text)
+      .join("\n");
+
+    const inicio = texto.indexOf("[");
+    const fin = texto.lastIndexOf("]");
+    if (inicio === -1 || fin === -1 || fin < inicio) return [];
+
+    const candidatos = JSON.parse(texto.slice(inicio, fin + 1));
+    if (!Array.isArray(candidatos)) return [];
+
+    return candidatos
+      .filter(c => c && c.nombre && c.contacto && c.fuenteUrl && c.fuenteVerificada === true)
+      .slice(0, 4)
+      .map(c => ({ ...c, origen, destino }));
+  } catch (err) {
+    console.warn("Investigación IA falló:", err.message);
+    return [];
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function capitaliza(texto) {
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
 
 // ---------- Helpers ----------
 
@@ -273,16 +352,41 @@ async function manejarAPI(req, res, urlObj) {
         WHERE r.origen = ? AND r.destino = ?
       `).all(origen, destino);
 
-      if (filas.length === 0) {
-        const ahora = new Date().toISOString();
-        db.prepare(`
-          INSERT INTO busquedas_sin_resultado (origen, destino, veces, primera_vez, ultima_vez)
-          VALUES (?, ?, 1, ?, ?)
-          ON CONFLICT(origen, destino) DO UPDATE SET veces = veces + 1, ultima_vez = excluded.ultima_vez
-        `).run(origen, destino, ahora, ahora);
+      if (filas.length > 0) {
+        return enviarJSON(res, 200, { empresas: filas });
       }
 
-      return enviarJSON(res, 200, { empresas: filas });
+      // Sin resultados: se registra la búsqueda real, y si hace más de 1h que no se
+      // intentó investigar este corredor (y hay API key configurada), se busca en vivo.
+      const ahora = new Date().toISOString();
+      const previo = db.prepare("SELECT ultima_investigacion_ia FROM busquedas_sin_resultado WHERE origen = ? AND destino = ?").get(origen, destino);
+      const yaVencido = !previo || !previo.ultima_investigacion_ia ||
+        (Date.now() - new Date(previo.ultima_investigacion_ia).getTime()) > THROTTLE_INVESTIGACION_MS;
+
+      db.prepare(`
+        INSERT INTO busquedas_sin_resultado (origen, destino, veces, primera_vez, ultima_vez)
+        VALUES (?, ?, 1, ?, ?)
+        ON CONFLICT(origen, destino) DO UPDATE SET veces = veces + 1, ultima_vez = excluded.ultima_vez
+      `).run(origen, destino, ahora, ahora);
+
+      if (yaVencido && ANTHROPIC_API_KEY) {
+        db.prepare("UPDATE busquedas_sin_resultado SET ultima_investigacion_ia = ? WHERE origen = ? AND destino = ?")
+          .run(new Date().toISOString(), origen, destino);
+
+        const candidatos = await investigarCorredorConIA(origen, destino);
+        candidatos.forEach(c => publicarOEncolarEmpresa(c));
+
+        if (candidatos.length > 0) {
+          const filasNuevas = db.prepare(`
+            SELECT r.precio, r.moneda, r.dias, e.nombre, e.tipo, e.contacto, e.origen_dato, e.fuente_url
+            FROM rutas r JOIN empresas e ON e.id = r.empresa_id
+            WHERE r.origen = ? AND r.destino = ?
+          `).all(origen, destino);
+          return enviarJSON(res, 200, { empresas: filasNuevas, investigadoEnVivo: true });
+        }
+      }
+
+      return enviarJSON(res, 200, { empresas: [] });
     }
 
     // POST /api/investigacion/bulk — resultados de investigación real (nunca inventados).
@@ -298,39 +402,9 @@ async function manejarAPI(req, res, urlObj) {
       const errores = [];
 
       entrada.forEach((fila, i) => {
-        const nombre = (fila.nombre || "").trim();
-        const tipo = (fila.tipo || "Regional").trim();
-        const contacto = (fila.contacto || "").trim();
-        const fuenteUrl = (fila.fuenteUrl || "").trim();
-        const fuenteVerificada = fila.fuenteVerificada === true;
-        const r = validarRuta(fila);
-
-        if (!nombre || !r.ok) {
-          errores.push(`Fila ${i + 1}: ${r.ok ? "falta nombre" : r.error}`);
-          return;
-        }
-
-        if (fuenteVerificada && contacto) {
-          let empresa = db.prepare("SELECT * FROM empresas WHERE contacto = ?").get(contacto);
-          if (!empresa) {
-            const id = "inv_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
-            db.prepare(`
-              INSERT INTO empresas (id, nombre, tipo, contacto, creado_en, origen_dato, fuente_verificada, fuente_url)
-              VALUES (?, ?, ?, ?, ?, 'investigacion', 1, ?)
-            `).run(id, nombre, tipo, contacto, new Date().toISOString(), fuenteUrl);
-            empresa = empresaAId(id);
-          }
-          db.prepare("INSERT INTO rutas (empresa_id, origen, destino, precio, moneda, dias) VALUES (?, ?, ?, ?, ?, ?)")
-            .run(empresa.id, r.ruta.origen, r.ruta.destino, r.ruta.precio, r.ruta.moneda, r.ruta.dias);
-          publicadas++;
-        } else {
-          db.prepare(`
-            INSERT INTO pendientes_revision (nombre, tipo, origen, destino, precio, moneda, dias, contacto, fuente_url, motivo, creado_en)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `).run(nombre, tipo, r.ruta.origen, r.ruta.destino, r.ruta.precio, r.ruta.moneda, r.ruta.dias, contacto, fuenteUrl,
-                 fuenteVerificada ? "sin contacto" : "fuente no confirmada en sitio propio", new Date().toISOString());
-          pendientes++;
-        }
+        const resultado = publicarOEncolarEmpresa(fila);
+        if (resultado.error) { errores.push(`Fila ${i + 1}: ${resultado.error}`); return; }
+        resultado.publicada ? publicadas++ : pendientes++;
       });
 
       return enviarJSON(res, 200, { publicadas, pendientes, errores });
@@ -391,6 +465,45 @@ function validarRuta(body) {
     return { ok: false, error: "datos incompletos o precio inválido" };
   }
   return { ok: true, ruta: { origen, destino, precio, moneda, dias } };
+}
+
+// Publica una empresa investigada (si fuenteVerificada+contacto) o la encola para
+// revisión manual. Usada tanto por /api/investigacion/bulk como por la
+// investigación en vivo con IA — un solo lugar donde se decide qué es "suficientemente
+// real" para mostrarse al público, así la regla nunca queda inconsistente entre rutas.
+function publicarOEncolarEmpresa(fila) {
+  const nombre = (fila.nombre || "").trim();
+  const tipo = (fila.tipo || "Regional").trim();
+  const contacto = (fila.contacto || "").trim();
+  const fuenteUrl = (fila.fuenteUrl || "").trim();
+  const fuenteVerificada = fila.fuenteVerificada === true;
+  const r = validarRuta(fila);
+
+  if (!nombre || !r.ok) {
+    return { error: r.ok ? "falta nombre" : r.error };
+  }
+
+  if (fuenteVerificada && contacto) {
+    let empresa = db.prepare("SELECT * FROM empresas WHERE contacto = ?").get(contacto);
+    if (!empresa) {
+      const id = "inv_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+      db.prepare(`
+        INSERT INTO empresas (id, nombre, tipo, contacto, creado_en, origen_dato, fuente_verificada, fuente_url)
+        VALUES (?, ?, ?, ?, ?, 'investigacion', 1, ?)
+      `).run(id, nombre, tipo, contacto, new Date().toISOString(), fuenteUrl);
+      empresa = empresaAId(id);
+    }
+    db.prepare("INSERT INTO rutas (empresa_id, origen, destino, precio, moneda, dias) VALUES (?, ?, ?, ?, ?, ?)")
+      .run(empresa.id, r.ruta.origen, r.ruta.destino, r.ruta.precio, r.ruta.moneda, r.ruta.dias);
+    return { publicada: true };
+  }
+
+  db.prepare(`
+    INSERT INTO pendientes_revision (nombre, tipo, origen, destino, precio, moneda, dias, contacto, fuente_url, motivo, creado_en)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(nombre, tipo, r.ruta.origen, r.ruta.destino, r.ruta.precio, r.ruta.moneda, r.ruta.dias, contacto, fuenteUrl,
+         fuenteVerificada ? "sin contacto" : "fuente no confirmada en sitio propio", new Date().toISOString());
+  return { publicada: false };
 }
 
 // ---------- Servidor ----------

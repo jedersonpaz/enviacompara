@@ -118,6 +118,7 @@ function renderResultados(empresas) {
           <div class="oferta-nombre">${e.nombre}</div>
           <div class="oferta-tipo">${e.tipo}</div>
           ${esMejor ? `<span class="badge-mejor">${t("mejor_precio")}${hayAhorro ? ` · ${t("ahorras")} ${porcentajeAhorro}%` : ""}</span>` : ""}
+          ${e.investigadoEnVivo ? `<span class="badge-en-vivo">✨ ${t("encontrado_ahora")}</span>` : ""}
         </div>
       </div>
       <div class="oferta-rating">
@@ -195,9 +196,20 @@ form.addEventListener("submit", async function (e) {
   if (!origen || !destino) return;
 
   const idEstaBusqueda = ++idBusquedaActual;
+  const textoOriginalBoton = btnBuscar.textContent;
   btnBuscar.disabled = true;
+  btnBuscar.textContent = t("buscando");
+  // Si tarda más de 3s probablemente está investigando en vivo (búsqueda web real
+  // por una ruta que no teníamos) — se lo decimos, para que no piense que se colgó.
+  const avisoInvestigando = setTimeout(() => {
+    if (idEstaBusqueda === idBusquedaActual) btnBuscar.textContent = t("investigando_en_vivo");
+  }, 3000);
+
   const ruta = await buscarRuta(origen, destino);
+
+  clearTimeout(avisoInvestigando);
   btnBuscar.disabled = false;
+  btnBuscar.textContent = textoOriginalBoton;
 
   // Si mientras esperábamos la respuesta el usuario ya lanzó otra búsqueda,
   // esta respuesta llegó tarde — se descarta para no pisar el resultado nuevo.
