@@ -128,7 +128,15 @@ const ALIAS = {
   "brazil": "brasil",
   "sao paulo": "brasil",
   "são paulo": "brasil",
-  "rio de janeiro": "brasil"
+  "rio de janeiro": "brasil",
+  "alemania": "alemania",
+  "germany": "alemania",
+  "berlin": "alemania",
+  "berlín": "alemania",
+  "francia": "francia",
+  "france": "francia",
+  "paris": "francia",
+  "parís": "francia"
 };
 
 function resolverPais(texto) {
@@ -151,7 +159,9 @@ const PAISES_INFO = {
   chile: { codigo: "CHL", nombre: "Chile", color: "#dc2626" },
   ecuador: { codigo: "ECU", nombre: "Ecuador", color: "#eab308" },
   venezuela: { codigo: "VEN", nombre: "Venezuela", color: "#eab308" },
-  brasil: { codigo: "BRA", nombre: "Brasil", color: "#16a34a" }
+  brasil: { codigo: "BRA", nombre: "Brasil", color: "#16a34a" },
+  alemania: { codigo: "DEU", nombre: "Alemania", color: "#1f2937" },
+  francia: { codigo: "FRA", nombre: "Francia", color: "#2563eb" }
 };
 
 function infoPais(codigo) {
