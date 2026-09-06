@@ -2,6 +2,25 @@ const form = document.getElementById("search-form");
 const resultadosSection = document.getElementById("resultados-section");
 const sinResultados = document.getElementById("sin-resultados");
 const listaResultados = document.getElementById("lista-resultados");
+
+// Registra un clic real de contacto — esto es lo que se factura después.
+// keepalive:true para que se complete aunque el navegador esté por abrir la
+// pestaña nueva de WhatsApp/correo al mismo tiempo.
+listaResultados.addEventListener("click", function (e) {
+  const link = e.target.closest("[data-empresa-id]");
+  if (!link || !ultimaBusqueda) return;
+  fetch("/api/contactos", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    keepalive: true,
+    body: JSON.stringify({
+      empresaId: link.dataset.empresaId,
+      tipoAccion: link.dataset.tipoAccion,
+      origen: ultimaBusqueda.origen,
+      destino: ultimaBusqueda.destino
+    })
+  }).catch(() => {});
+});
 const resultadosTitulo = document.getElementById("resultados-titulo");
 const ordenSelect = document.getElementById("orden-select");
 const monedaSelect = document.getElementById("moneda-select");
@@ -160,7 +179,7 @@ function botonAccion(e, busqueda) {
       .replace("{origen}", capitaliza(busqueda.origen))
       .replace("{destino}", capitaliza(busqueda.destino));
     const enlace = enlaceContacto(contacto, mensaje, t("asunto_correo"));
-    return `<a class="btn-contactar" href="${enlace}" target="_blank" rel="noopener">${t("btn_cotizar")}</a>`;
+    return `<a class="btn-contactar" href="${enlace}" target="_blank" rel="noopener" data-empresa-id="${e.empresaId}" data-tipo-accion="cotizar">${t("btn_cotizar")}</a>`;
   }
 
   if (e.identificada && contacto) {
@@ -168,7 +187,7 @@ function botonAccion(e, busqueda) {
       .replace("{origen}", capitaliza(busqueda.origen))
       .replace("{destino}", capitaliza(busqueda.destino));
     const enlace = enlaceContacto(contacto, mensaje, t("asunto_invitacion"));
-    return `<a class="btn-invitar" href="${enlace}" target="_blank" rel="noopener" title="${t("tooltip_identificada")}">${t("btn_invitar")}</a>`;
+    return `<a class="btn-invitar" href="${enlace}" target="_blank" rel="noopener" title="${t("tooltip_identificada")}" data-empresa-id="${e.empresaId}" data-tipo-accion="invitar">${t("btn_invitar")}</a>`;
   }
 
   if (e.sitioOficial) {

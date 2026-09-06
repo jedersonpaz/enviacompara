@@ -24,7 +24,7 @@ async function apiJSON(url, opciones) {
   return data;
 }
 
-function mostrarPanel(empresa, rutas) {
+function mostrarPanel(empresa, rutas, contactos) {
   empresaEnPanel = empresa;
   rutasEnPanel = rutas;
   pasoRegistro.hidden = true;
@@ -32,6 +32,15 @@ function mostrarPanel(empresa, rutas) {
   pitchEmpresa.hidden = true;
   saludoEmpresa.textContent = `${t("saludo_hola")} ${empresa.nombre}`;
   renderRutas();
+  renderContadorContactos(contactos || 0);
+}
+
+function renderContadorContactos(contactos) {
+  ultimoConteoContactos = contactos || 0;
+  const el = document.getElementById("contador-contactos");
+  if (!contactos) { el.hidden = true; return; }
+  el.hidden = false;
+  el.textContent = `📈 ${contactos} ${contactos === 1 ? t("contacto_recibido_singular") : t("contactos_recibidos_plural")}`;
 }
 
 function renderRutas() {
@@ -60,10 +69,13 @@ function renderRutas() {
   });
 }
 
+let ultimoConteoContactos = 0;
+
 document.addEventListener("idioma-cambiado", function () {
   if (empresaEnPanel) {
     saludoEmpresa.textContent = `${t("saludo_hola")} ${empresaEnPanel.nombre}`;
     renderRutas();
+    renderContadorContactos(ultimoConteoContactos);
   }
 });
 
@@ -85,7 +97,7 @@ formEmpresa.addEventListener("submit", async function (e) {
       body: JSON.stringify({ nombre, tipo, contacto })
     });
     localStorage.setItem(CLAVE_SESION, data.empresa.id);
-    mostrarPanel(data.empresa, data.rutas);
+    mostrarPanel(data.empresa, data.rutas, data.contactos);
   } catch (err) {
     alert("No se pudo registrar la empresa: " + err.message);
   }
@@ -249,7 +261,7 @@ function mostrarResultadoCarga(ok, mensaje, errores) {
   if (!id) return;
   try {
     const data = await apiJSON(`/api/empresas/${id}`);
-    mostrarPanel(data.empresa, data.rutas);
+    mostrarPanel(data.empresa, data.rutas, data.contactos);
   } catch (err) {
     localStorage.removeItem(CLAVE_SESION);
   }

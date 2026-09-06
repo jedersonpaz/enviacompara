@@ -185,6 +185,7 @@ async function buscarEmpresasRegistradas(origen, destino) {
     if (!resp.ok) return [];
     const data = await resp.json();
     return (data.empresas || []).map(e => ({
+      empresaId: e.empresa_id,
       nombre: e.nombre,
       tipo: e.tipo,
       precio: e.precio,

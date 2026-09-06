@@ -69,6 +69,20 @@ db.exec(`
     motivo TEXT,
     creado_en TEXT NOT NULL
   );
+
+  -- Cada vez que un usuario real hace clic en "Cotizar"/"Invitar a unirse" para
+  -- una empresa. Esto es lo que de verdad se factura: leads reales entregados,
+  -- no visitas ni promesas — la base de cualquier modelo de ingresos aquí.
+  CREATE TABLE IF NOT EXISTS contactos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    empresa_id TEXT NOT NULL,
+    tipo_accion TEXT NOT NULL,
+    origen TEXT NOT NULL,
+    destino TEXT NOT NULL,
+    creado_en TEXT NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_contactos_empresa ON contactos(empresa_id);
 `);
 
 // Migración simple: agrega la columna si la base ya existía de antes sin ella.
@@ -269,15 +283,41 @@ async function manejarAPI(req, res, urlObj) {
         db.prepare("INSERT INTO empresas (id, nombre, tipo, contacto, creado_en) VALUES (?, ?, ?, ?, ?)")
           .run(id, nombre, tipo, contacto, new Date().toISOString());
         empresa = empresaAId(id);
+      } else if (empresa.origen_dato !== "registro_propio") {
+        // Esta empresa ya la habíamos identificado por investigación (contacto real,
+        // pero sin su consentimiento). Ahora se registró ella misma con ese mismo
+        // contacto: eso SÍ es consentimiento real, así que la "ascendemos" — deja de
+        // ser "invitar a unirse" y pasa a mostrarse como registrada de verdad.
+        db.prepare("UPDATE empresas SET origen_dato = 'registro_propio' WHERE id = ?").run(empresa.id);
+        empresa = empresaAId(empresa.id);
       }
-      return enviarJSON(res, 200, { empresa, rutas: rutasDeEmpresa(empresa.id) });
+      const contactos = db.prepare("SELECT COUNT(*) AS n FROM contactos WHERE empresa_id = ?").get(empresa.id).n;
+      return enviarJSON(res, 200, { empresa, rutas: rutasDeEmpresa(empresa.id), contactos });
     }
 
     // GET /api/empresas/:id
     if (req.method === "GET" && partes.length === 3 && partes[1] === "empresas") {
       const empresa = empresaAId(partes[2]);
       if (!empresa) return enviarJSON(res, 404, { error: "empresa no encontrada" });
-      return enviarJSON(res, 200, { empresa, rutas: rutasDeEmpresa(empresa.id) });
+      const contactos = db.prepare("SELECT COUNT(*) AS n FROM contactos WHERE empresa_id = ?").get(empresa.id).n;
+      return enviarJSON(res, 200, { empresa, rutas: rutasDeEmpresa(empresa.id), contactos });
+    }
+
+    // POST /api/contactos — registra un clic real de "Cotizar"/"Invitar a unirse".
+    // Esto es lo que se factura: no importa si la empresa respondió, importa que
+    // le mandamos un cliente real interesado en esa ruta.
+    if (req.method === "POST" && partes.length === 2 && partes[1] === "contactos") {
+      const body = await leerCuerpo(req);
+      const empresaId = (body.empresaId || "").trim();
+      const tipoAccion = (body.tipoAccion || "").trim();
+      const origen = normaliza((body.origen || "").toString());
+      const destino = normaliza((body.destino || "").toString());
+      if (!empresaId || !tipoAccion || !origen || !destino) {
+        return enviarJSON(res, 400, { error: "faltan datos" });
+      }
+      db.prepare("INSERT INTO contactos (empresa_id, tipo_accion, origen, destino, creado_en) VALUES (?, ?, ?, ?, ?)")
+        .run(empresaId, tipoAccion, origen, destino, new Date().toISOString());
+      return enviarJSON(res, 200, { ok: true });
     }
 
     // POST /api/empresas/:id/rutas   { origen, destino, precio, moneda, dias }
@@ -327,6 +367,20 @@ async function manejarAPI(req, res, urlObj) {
       return enviarJSON(res, 200, { rutas: rutasDeEmpresa(empresaId) });
     }
 
+    // GET /api/reportes/contactos — ranking real de leads entregados por empresa.
+    // Esta es la métrica para decidir a quién facturar y cuánto: no es tráfico,
+    // es gente que de verdad hizo clic para contactar a esa empresa.
+    if (req.method === "GET" && partes.length === 3 && partes[1] === "reportes" && partes[2] === "contactos") {
+      const filas = db.prepare(`
+        SELECT e.id, e.nombre, e.contacto, e.origen_dato, COUNT(c.id) AS total_contactos,
+               MAX(c.creado_en) AS ultimo_contacto
+        FROM empresas e JOIN contactos c ON c.empresa_id = e.id
+        GROUP BY e.id
+        ORDER BY total_contactos DESC
+      `).all();
+      return enviarJSON(res, 200, { empresas: filas });
+    }
+
     // GET /api/estadisticas — cifras reales de cobertura (nunca inventadas).
     if (req.method === "GET" && partes.length === 2 && partes[1] === "estadisticas") {
       const empresas = db.prepare("SELECT COUNT(DISTINCT empresa_id) AS n FROM rutas").get().n;
@@ -347,7 +401,7 @@ async function manejarAPI(req, res, urlObj) {
       if (!origen || !destino) return enviarJSON(res, 400, { error: "origen y destino son obligatorios" });
 
       const filas = db.prepare(`
-        SELECT r.precio, r.moneda, r.dias, e.nombre, e.tipo, e.contacto, e.origen_dato, e.fuente_url
+        SELECT e.id AS empresa_id, r.precio, r.moneda, r.dias, e.nombre, e.tipo, e.contacto, e.origen_dato, e.fuente_url
         FROM rutas r JOIN empresas e ON e.id = r.empresa_id
         WHERE r.origen = ? AND r.destino = ?
       `).all(origen, destino);
@@ -378,7 +432,7 @@ async function manejarAPI(req, res, urlObj) {
 
         if (candidatos.length > 0) {
           const filasNuevas = db.prepare(`
-            SELECT r.precio, r.moneda, r.dias, e.nombre, e.tipo, e.contacto, e.origen_dato, e.fuente_url
+            SELECT e.id AS empresa_id, r.precio, r.moneda, r.dias, e.nombre, e.tipo, e.contacto, e.origen_dato, e.fuente_url
             FROM rutas r JOIN empresas e ON e.id = r.empresa_id
             WHERE r.origen = ? AND r.destino = ?
           `).all(origen, destino);

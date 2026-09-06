@@ -73,6 +73,17 @@
 .panel-empresa h3.tus-rutas-titulo { font-size: 16px; margin: 22px 0 12px; }
 .ayuda { font-size: 13.5px; color: var(--gris-500); margin-bottom: 18px; }
 
+.contador-contactos {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #166534;
+  background: #dcfce7;
+  padding: 6px 14px;
+  border-radius: 999px;
+  margin-top: 8px;
+}
+
 #form-empresa, .form-ruta {
   display: grid;
   grid-template-columns: 1fr 1fr auto;
