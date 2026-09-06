@@ -8,41 +8,53 @@ const RUTAS = [
     origen: "mexico",
     destino: "colombia",
     empresas: [
-      { nombre: "DHL Express", tipo: "Global", precio: 68, moneda: "USD", dias: "3-5", rating: 4.4, resenas: 1820, sitioOficial: "https://www.dhl.com/mx-es/home.html" },
-      { nombre: "FedEx International", tipo: "Global", precio: 74, moneda: "USD", dias: "3-6", rating: 4.3, resenas: 1540, sitioOficial: "https://www.fedex.com/es-mx/home.html" },
-      { nombre: "UPS Worldwide", tipo: "Global", precio: 71, moneda: "USD", dias: "4-6", rating: 4.2, resenas: 1290, sitioOficial: "https://www.ups.com/mx/es/home.html" }
+      { nombre: "DHL Express", tipo: "Global", precio: 68, moneda: "USD", dias: "3-5", sitioOficial: "https://www.dhl.com/mx-es/home.html" },
+      { nombre: "FedEx International", tipo: "Global", precio: 74, moneda: "USD", dias: "3-6", sitioOficial: "https://www.fedex.com/es-mx/home.html" },
+      { nombre: "UPS Worldwide", tipo: "Global", precio: 71, moneda: "USD", dias: "4-6", sitioOficial: "https://www.ups.com/mx/es/home.html" }
     ]
   },
   {
     origen: "mexico",
     destino: "peru",
     empresas: [
-      { nombre: "DHL Express", tipo: "Global", precio: 79, moneda: "USD", dias: "4-6", rating: 4.4, resenas: 1820, sitioOficial: "https://www.dhl.com/pe-es/home.html" },
-      { nombre: "FedEx International", tipo: "Global", precio: 83, moneda: "USD", dias: "4-7", rating: 4.3, resenas: 1540 }
+      { nombre: "DHL Express", tipo: "Global", precio: 79, moneda: "USD", dias: "4-6", sitioOficial: "https://www.dhl.com/pe-es/home.html" },
+      { nombre: "FedEx International", tipo: "Global", precio: 83, moneda: "USD", dias: "4-7" }
     ]
   },
   {
     origen: "turquia",
     destino: "mexico",
     empresas: [
-      { nombre: "DHL Express", tipo: "Global", precio: 112, moneda: "USD", dias: "5-8", rating: 4.4, resenas: 1820 },
-      { nombre: "UPS Worldwide", tipo: "Global", precio: 118, moneda: "USD", dias: "5-9", rating: 4.2, resenas: 1290 }
+      { nombre: "DHL Express", tipo: "Global", precio: 112, moneda: "USD", dias: "5-8" },
+      { nombre: "UPS Worldwide", tipo: "Global", precio: 118, moneda: "USD", dias: "5-9" }
     ]
   },
   {
     origen: "mexico",
     destino: "espana",
     empresas: [
-      { nombre: "DHL Express", tipo: "Global", precio: 64, moneda: "USD", dias: "3-5", rating: 4.4, resenas: 1820, sitioOficial: "https://www.dhl.com/es-es/home.html" },
-      { nombre: "FedEx International", tipo: "Global", precio: 69, moneda: "USD", dias: "3-6", rating: 4.3, resenas: 1540, sitioOficial: "https://www.fedex.com/es-es/home.html" },
-      { nombre: "UPS Worldwide", tipo: "Global", precio: 66, moneda: "USD", dias: "4-6", rating: 4.2, resenas: 1290, sitioOficial: "https://www.ups.com/es/es/home.html" }
+      { nombre: "DHL Express", tipo: "Global", precio: 64, moneda: "USD", dias: "3-5", sitioOficial: "https://www.dhl.com/es-es/home.html" },
+      { nombre: "FedEx International", tipo: "Global", precio: 69, moneda: "USD", dias: "3-6", sitioOficial: "https://www.fedex.com/es-es/home.html" },
+      { nombre: "UPS Worldwide", tipo: "Global", precio: 66, moneda: "USD", dias: "4-6", sitioOficial: "https://www.ups.com/es/es/home.html" }
     ]
   },
   {
     origen: "colombia",
     destino: "peru",
     empresas: [
-      { nombre: "DHL Express", tipo: "Global", precio: 47, moneda: "USD", dias: "2-4", rating: 4.4, resenas: 1820, sitioOficial: "https://www.dhl.com/pe-es/home.html" }
+      { nombre: "DHL Express", tipo: "Global", precio: 47, moneda: "USD", dias: "2-4", sitioOficial: "https://www.dhl.com/pe-es/home.html" }
+    ]
+  },
+  {
+    // Hermes (myHermes.de, grupo Otto) confirmado real: sí hace envíos personales
+    // Alemania->Francia, con precios publicados en su propia página. No tiene
+    // teléfono/WhatsApp verificable en su sitio (solo formulario web, y su
+    // WhatsApp de soporte quedó discontinuado según su propia página de contacto),
+    // así que va como referencia con precio real, no con botón de invitación.
+    origen: "alemania",
+    destino: "francia",
+    empresas: [
+      { nombre: "Hermes (myHermes)", tipo: "Global", precio: 15, moneda: "EUR", dias: "5-6", sitioOficial: "https://www.myhermes.de/preise/versandlaender/frankreich/" }
     ]
   }
 ];
